@@ -2387,7 +2387,7 @@ void Tracking::Track()
         {
             if(bOK)
             {
-                // 局部地图跟踪
+                // 局部地图跟踪 这里会跟踪失败
                 bOK = TrackLocalMap();
             }
             if(!bOK)
@@ -3537,9 +3537,11 @@ bool Tracking::TrackLocalMap()
     mnMatchesInliers = 0;
 
     // Update MapPoints Statistics
+    //
     // Step 4：更新当前帧的地图点被观测程度，并统计跟踪局部地图后匹配数目
     for(int i=0; i<mCurrentFrame.N; i++)
     {
+        //当前帧的地图点，大小和关键点相等，理论上等于关键点  N为Number of KeyPoints  mvpMapPoints创建时的大小等于N
         if(mCurrentFrame.mvpMapPoints[i])
         {
             // 由于当前帧的地图点可以被当前帧观测到，其被观测统计量加1
@@ -3578,7 +3580,7 @@ bool Tracking::TrackLocalMap()
     if((mnMatchesInliers>10)&&(mState==RECENTLY_LOST))
         return true;
 
-    // 单目IMU模式下做完初始化至少成功跟踪15个才算成功，没做初始化需要50个
+    // 单目IMU模式下做完初始化至少成功跟踪15个才算成功，没做初始化需要50个   mnMatchesInliers这个数比较少
     if (mSensor == System::IMU_MONOCULAR)
     {
         if((mnMatchesInliers<15 && mpAtlas->isImuInitialized())||(mnMatchesInliers<50 && !mpAtlas->isImuInitialized()))
