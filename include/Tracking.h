@@ -293,8 +293,8 @@ protected:
     float mbf;
     float mImageScale;
 
-    float mImuFreq;
-    double mImuPer;
+    float mImuFreq;//IMU的频率
+    double mImuPer;//IMU频率的倒数
     bool mInsertKFsLost;
 
     //New KeyFrame rules (according to fps)

@@ -43,7 +43,7 @@ using namespace std;
 // "n"表示int类型
 // "b"表示bool类型
 // "s"表示set类型
-// "v"表示vector数据类型
+// "v"表示vector数据类型F
 // 'l'表示list数据类型
 // "KF"表示KeyFrame数据类型 
 
@@ -66,7 +66,7 @@ namespace ORB_SLAM3
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
     Atlas *pAtlas, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, Settings* settings, const string &_nameSeq)
     : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
-    mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
+    mbOnlyTracking(true), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
     mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
     mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame*>(NULL))
@@ -1808,13 +1808,14 @@ void Tracking::PreintegrateIMU()
     IMU::Preintegrated* pImuPreintegratedFromLastFrame = new IMU::Preintegrated(mLastFrame.mImuBias,mCurrentFrame.mImuCalib);
     // 针对预积分位置的不同做不同中值积分的处理
     /**
-     *  根据上面imu帧的筛选，IMU与图像帧的时序如下：
+     *  根据上面imu帧的筛选，IMU与图像帧的时序如下： mvImuFromLastFrame两帧间的数据
      *  Frame---IMU0---IMU1---IMU2---IMU3---IMU4---------------IMUx---Frame---IMUx+1
      *  T_------T0-----T1-----T2-----T3-----T4-----------------Tx-----_T------Tx+1
      *  A_------A0-----A1-----A2-----A3-----A4-----------------Ax-----_T------Ax+1
      *  W_------W0-----W1-----W2-----W3-----W4-----------------Wx-----_T------Wx+1
      *  T_和_T分别表示上一图像帧和当前图像帧的时间戳，A(加速度数据)，W(陀螺仪数据)，同理
      */
+     //n为IMU的个数
     for(int i=0; i<n; i++)
     {
         float tstep;
@@ -1841,7 +1842,7 @@ void Tracking::PreintegrateIMU()
         {
             // 中间的数据不存在帧的干扰，正常计算
             acc = (mvImuFromLastFrame[i].a+mvImuFromLastFrame[i+1].a)*0.5f;
-            angVel = (mvImuFromLastFrame[i].w+mvImuFromLastFrame[i+1].w)*0.5f;
+            angVel = (mvImuFromLastFrame[i].w+mvImuFromLastFrame[i+1].w)*0.5f;//取平均
             tstep = mvImuFromLastFrame[i+1].t-mvImuFromLastFrame[i].t;
         }
         // 直到倒数第二个imu时刻时，计算过程跟第一时刻类似，都需要考虑帧与imu时刻的关系
@@ -1866,8 +1867,8 @@ void Tracking::PreintegrateIMU()
         // 应该是必存在的吧，一个是相对上一关键帧，一个是相对上一帧
         if (!mpImuPreintegratedFromLastKF)
             cout << "mpImuPreintegratedFromLastKF does not exist" << endl;
-        mpImuPreintegratedFromLastKF->IntegrateNewMeasurement(acc,angVel,tstep);
-        pImuPreintegratedFromLastFrame->IntegrateNewMeasurement(acc,angVel,tstep);
+        mpImuPreintegratedFromLastKF->IntegrateNewMeasurement(acc,angVel,tstep);//从上一个关键帧
+        pImuPreintegratedFromLastFrame->IntegrateNewMeasurement(acc,angVel,tstep);//从上一个帧
     }
 
     // 记录当前预积分的图像帧
@@ -1891,6 +1892,7 @@ void Tracking::PreintegrateIMU()
  */
 bool Tracking::PredictStateIMU()
 {
+    //看看是否用到了这个
     if(!mCurrentFrame.mpPrevFrame)
     {
         Verbose::PrintMess("No last frame", Verbose::VERBOSITY_NORMAL);
@@ -1921,7 +1923,7 @@ bool Tracking::PredictStateIMU()
         Eigen::Vector3f twb2 = twb1 + Vwb1*t12 + 0.5f*t12*t12*Gz+ Rwb1*mpImuPreintegratedFromLastKF->GetDeltaPosition(mpLastKeyFrame->GetImuBias());
         // 速度 
         Eigen::Vector3f Vwb2 = Vwb1 + t12*Gz + Rwb1 * mpImuPreintegratedFromLastKF->GetDeltaVelocity(mpLastKeyFrame->GetImuBias());
-        // 设置当前帧的世界坐标系的相机位姿
+        //设置当前帧的世界坐标系的相机位姿  这个设置的值在 SearchLocalPoints中的 Frame.isInFrustum 会用来判断一个三维点是否在 当前帧的范围内
         mCurrentFrame.SetImuPoseVelocity(Rwb2,twb2,Vwb2);
 
         // 记录bias
@@ -2163,7 +2165,7 @@ void Tracking::Track()
                     // 用恒速模型跟踪。所谓的恒速就是假设上上帧到上一帧的位姿=上一帧的位姿到当前帧位姿
                     // 根据恒速模型设定当前帧的初始位姿，用最近的普通帧来跟踪当前的普通帧
                     // 通过投影的方式在参考帧中找当前帧特征点的匹配点，优化每个特征点所对应3D点的投影误差即可得到位姿
-                    bOK = TrackWithMotionModel();
+                    bOK = TrackWithMotionModel();//在IMU_单目下，这个一定为真
                     if(!bOK)
                         bOK = TrackReferenceKeyFrame();  // 根据恒速模型失败了，只能根据参考关键帧来跟踪
                 }
@@ -2199,7 +2201,7 @@ void Tracking::Track()
             }
             else  // 跟踪不正常按照下面处理
             {
-                // 如果是RECENTLY_LOST状态
+                // 应该不会到达这个状态，因为之前的标记不会有这个  如果是RECENTLY_LOST状态
                 if (mState == RECENTLY_LOST)
                 {
                     Verbose::PrintMess("Lost for a short time", Verbose::VERBOSITY_NORMAL);
@@ -3233,7 +3235,7 @@ bool Tracking::TrackReferenceKeyFrame()
     }
 
     if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
-        return true;
+        return true;//这里是不是有问题
     else
         return nmatchesMap>=10;  // 跟踪成功的数目超过10才认为跟踪成功，否则跟踪失败
 }
@@ -3404,7 +3406,7 @@ bool Tracking::TrackWithMotionModel()
     {
         Verbose::PrintMess("Not enough matches!!", Verbose::VERBOSITY_NORMAL);
         if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
-            return true;
+            return true;//但是如果是IMU就可以继续
         else
             return false;
     }
@@ -3450,7 +3452,7 @@ bool Tracking::TrackWithMotionModel()
     }
 
     if (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
-        return true;
+        return true;//在IMU下默认返回了true 但是这个好像是有问题的？
     else
         return nmatchesMap>=10;  // 匹配超过10个点就认为跟踪成功
 }
@@ -3581,7 +3583,7 @@ bool Tracking::TrackLocalMap()
     // 单目IMU模式下做完初始化至少成功跟踪15个才算成功，没做初始化需要50个
     if (mSensor == System::IMU_MONOCULAR)
     {
-        if((mnMatchesInliers<15 && mpAtlas->isImuInitialized())||(mnMatchesInliers<50 && !mpAtlas->isImuInitialized()))
+        if((mnMatchesInliers<15 && mpAtlas->isImuInitialized())||(mnMatchesInliers<30 && !mpAtlas->isImuInitialized()))
         {
             return false;
         }

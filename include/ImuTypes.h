@@ -41,7 +41,7 @@ namespace IMU
 {
 
 const float GRAVITY_VALUE=9.81;
-
+//gyro 陀螺仪 用w 代表，出于公式中的w
 //IMU measurement (gyro, accelerometer and timestamp)
 class Point
 {
@@ -121,7 +121,7 @@ public:
     // Sophus/Eigen implementation
     Sophus::SE3<float> mTcb;
     Sophus::SE3<float> mTbc;
-    Eigen::DiagonalMatrix<float,6> Cov, CovWalk;
+    Eigen::DiagonalMatrix<float,6> Cov, CovWalk;//diagonal 对角矩阵，春初相机Tcb imu到cam的变换矩阵
     bool mbIsSet;
 };
 

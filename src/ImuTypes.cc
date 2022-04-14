@@ -262,13 +262,13 @@ void Preintegrated::IntegrateNewMeasurement(const Eigen::Vector3f &acceleration,
     Eigen::Matrix<float, 9, 6> B;
     B.setZero();
 
-    // 考虑偏置后的加速度、角速度
+    // 考虑偏置后的加速度、角速度 共6个方向
     Eigen::Vector3f acc, accW;
     acc << acceleration(0) - b.bax, acceleration(1) - b.bay, acceleration(2) - b.baz;
     accW << angVel(0) - b.bwx, angVel(1) - b.bwy, angVel(2) - b.bwz;
 
     // 记录平均加速度和角速度
-    avgA = (dT * avgA + dR * acc * dt) / (dT + dt);
+    avgA = (dT * avgA + dR * acc * dt) / (dT + dt); //dR是什么  no-updated delta rotation 旋转的变化
     avgW = (dT * avgW + accW * dt) / (dT + dt);
 
     // Update delta position dP and velocity dV (rely on no-updated delta rotation)
@@ -463,7 +463,7 @@ Eigen::Vector3f Preintegrated::GetUpdatedDeltaPosition()
 Eigen::Matrix3f Preintegrated::GetOriginalDeltaRotation()
 {
     std::unique_lock<std::mutex> lock(mMutex);
-    return dR;
+    return dR;//d表示deta
 }
 
 /** 

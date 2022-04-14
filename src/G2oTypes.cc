@@ -99,7 +99,7 @@ ImuCamPose::ImuCamPose(Frame *pF):its(0)
     tbc.resize(num_cams);
     pCamera.resize(num_cams);
 
-    // Left camera
+    // Left camera 这里用到了IMU到摄像头的转换矩阵
     tcw[0] = pF->GetPose().translation().cast<double>();
     Rcw[0] = pF->GetPose().rotationMatrix().cast<double>();
     tcb[0] = pF->mImuCalib.mTcb.translation().cast<double>();

@@ -72,7 +72,7 @@ namespace ORB_SLAM3
                         F.GetFeaturesInArea(pMP->mTrackProjX,pMP->mTrackProjY,r*F.mvScaleFactors[nPredictedLevel],nPredictedLevel-1,nPredictedLevel);
 
                 if(!vIndices.empty()){
-                    const cv::Mat MPdescriptor = pMP->GetDescriptor();
+                    const cv::Mat MPdescriptor = pMP->GetDescriptor();//获取地图点的描述子
 
                     int bestDist=256;
                     int bestLevel= -1;

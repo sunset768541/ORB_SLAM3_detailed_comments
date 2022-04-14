@@ -606,7 +606,10 @@ class SO3 : public SO3Base<SO3<Scalar_, Options>> {
       imag_factor = sin_half_theta / (*theta);
       real_factor = cos(half_theta);
     }
-
+// after  op aux1 336 aux2 146
+//Sophus ensure failed in function 'static Sophus::SO3<Scalar_> Sophus::SO3<Scalar_, Options>::expAndTheta(const Tangent&, Sophus::SO3<Scalar_, Options>::Scalar*) [with Scalar_ = float; int Options = 0; Sophus::SO3<Scalar_, Options>::Tangent = Eigen::Matrix<float, 3, 1>; Sophus::SO3<Scalar_, Options>::Scalar = float]', file '/home/slam/ROSSLAM/ORB_SLAM3/Thirdparty/Sophus/sophus/so3.hpp', line 617.
+//SO3::exp failed! omega: -nan -nan -nan, real: -nan, img: -nan
+//Aborted (core dumped)
     SO3 q;
     q.unit_quaternion_nonconst() =
         QuaternionMember(real_factor, imag_factor * omega.x(),
