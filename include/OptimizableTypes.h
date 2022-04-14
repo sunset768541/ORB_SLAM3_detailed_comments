@@ -41,6 +41,13 @@ public:
     void computeError()  {
         const g2o::VertexSE3Expmap* v1 = static_cast<const g2o::VertexSE3Expmap*>(_vertices[0]);
         Eigen::Vector2d obs(_measurement);
+        //[u,v] = KTP;  pCamera->project = K   Xw=P   T=v1->estimate()
+        //Xw为MapPoint的空间坐标  .estimate() 返回状态变量的值，优化完后读取。
+        //   se3quat.h中的 map方法，_r为旋转  _t为平移
+        //   Vector3d map(const Vector3d & xyz) const
+        //      {
+        //        return _r*xyz + _t;
+        //      }
         _error = obs-pCamera->project(v1->estimate().map(Xw));
     }
 
