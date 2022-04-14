@@ -4731,7 +4731,13 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
                 e->computeError();
             }
 
+            //e->computeError中可以打印出KeyPoint的坐标值，和MapPoint投影到屏幕上的坐标值
+            //进而计算出向量误差，转换为标量 x2+y2
+            //例如 观测 Obs                    [335.19705200195312,394.6129150390625]
+            //通过MapPoint位姿投影计算得出的      [316.12055433503855,412.44923140093533]
+            //e->computeError() = 682.04
             const float chi2 = e->chi2();
+
             bool bClose = pFrame->mvpMapPoints[idx]->mTrackDepth<10.f;
 
             if((chi2>chi2Mono[it]&&!bClose)||(bClose && chi2>chi2close)||!e->isDepthPositive())
