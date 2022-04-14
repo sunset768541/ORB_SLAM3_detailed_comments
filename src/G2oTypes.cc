@@ -188,7 +188,7 @@ void ImuCamPose::SetParam(
 Eigen::Vector2d ImuCamPose::Project(const Eigen::Vector3d &Xw, int cam_idx) const
 {
     Eigen::Vector3d Xc = Rcw[cam_idx] * Xw + tcw[cam_idx];
-
+    //Pinhole 的投影
     return pCamera[cam_idx]->project(Xc);
 }
 

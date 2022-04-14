@@ -467,6 +467,7 @@ public:
     {
         const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[0]);
         const Eigen::Vector2d obs(_measurement);
+        //obs是设置的观测值，VPose->estimate().Project(Xw, cam_idx)是计算值
         _error = obs - VPose->estimate().Project(Xw, cam_idx);
     }
 
