@@ -244,3 +244,18 @@ A flag in `include\Config.h` activates time measurements. It is necessary to unc
 
 # 9. Calibration
 You can find a tutorial for visual-inertial calibration and a detailed description of the contents of valid configuration files at  `Calibration_Tutorial.pdf`
+
+
+ros命令
+
+//重新发布手机上传的图像为未压缩topic
+rosrun image_transport republish compressed in:=/android/image_raw raw out:=/camera/image_raw
+//录制rosbag
+rosbag record   /camera/image_raw  /android/imu
+//手机的录制有些问题，要用到这个python脚本修复一下bag文件
+python fix_bag.py -l compress-80.bag  fixed.bag
+
+//用kalibr解压bag文件
+kalibr_bagextractor --image-topics /camera/image_raw --imu-topics /android/imu --output-folder . --bag fixed.bag
+
+
