@@ -184,12 +184,21 @@ void ImuCamPose::SetParam(
 
 /** 
  * @brief 单目投影
+ *
+ *
+ *
+ *  tcw[0] = pF->GetPose().translation().cast<double>();
+    Rcw[0] = pF->GetPose().rotationMatrix().cast<double>();
+    tcb[0] = pF->mImuCalib.mTcb.translation().cast<double>();
+    Rcb[0] = pF->mImuCalib.mTcb.rotationMatrix().cast<double>();
+    Rbc[0] = Rcb[0].transpose();
+    tbc[0] = pF->mImuCalib.mTbc.translation().cast<double>();
  */
 Eigen::Vector2d ImuCamPose::Project(const Eigen::Vector3d &Xw, int cam_idx) const
 {
-    Eigen::Vector3d Xc = Rcw[cam_idx] * Xw + tcw[cam_idx];
+    Eigen::Vector3d Xc = Rcw[cam_idx] * Xw + tcw[cam_idx];//Xw为世界坐标，Xc为相机坐标 Rcw为从世界坐标系转换到相机坐标系的然转矩阵
     //Pinhole 的投影
-    return pCamera[cam_idx]->project(Xc);
+    return pCamera[cam_idx]->project(Xc);//将相机坐标系投影到屏幕坐标系，用到了相机的标定参数
 }
 
 /** 

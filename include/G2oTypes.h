@@ -465,10 +465,16 @@ public:
 
     void computeError()
     {
-        const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[0]);
+        const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[0]); //VertexPose有set
+        //    VertexPose(KeyFrame* pKF){      //设置estimate的具体实现  调用 返回设置进去的_estimate estimate() const { return _estimate;}
+        //        setEstimate(ImuCamPose(pKF));
+        //    }
+        //    VertexPose(Frame* pF){
+        //        setEstimate(ImuCamPose(pF));
+        //    }
         const Eigen::Vector2d obs(_measurement);
-        //obs是设置的观测值，VPose->estimate().Project(Xw, cam_idx)是计算值
-        _error = obs - VPose->estimate().Project(Xw, cam_idx);
+        //obs是设置的观测值，VPose->estimate().Project(Xw, cam_idx)是计算值  Xw为地图点的空间坐标
+        _error = obs - VPose->estimate().Project(Xw, cam_idx);//重投影  ImuCamPose.Project = VPose->estimate().Project
     }
 
     virtual void linearizeOplus();
